@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"context"
+	"fmt"
 	"log"
 	"os"
 	"time"
@@ -30,17 +31,17 @@ const (
 func main() {
 	initMongo()
 	insertData()
-	// readCollection()
+	readCollection()
 
 }
 
 func initMongo() {
 
 	var err error
-	var cancel func()
+	// var cancel func()
 
-	ctx, cancel = context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
+	ctx, _ = context.WithTimeout(context.Background(), 10*time.Second)
+	// defer cancel() // defer는 함수가 종료될 때 에러가 아니라면 가장 마지막으로 실행됨.
 
 	getMongoUrl()
 	client, err = mongo.Connect(ctx, options.Client().ApplyURI(
@@ -66,21 +67,6 @@ func getMongoUrl() {
 	}
 }
 
-func readCollection() {
-	cursor, err := collection.Find(ctx, bson.M{})
-	if err != nil {
-		println(err)
-	}
-
-	// resultList := []Model.User{}
-
-	for cursor.Next(ctx) {
-		data := Model.User{}
-		cursor.Decode(&data)
-		println(data.Name)
-	}
-}
-
 func insertData() {
 
 	user := Model.User{
@@ -88,14 +74,25 @@ func insertData() {
 		Name:  "asdasd",
 		Email: "asdas@asdas",
 	}
+	result, err := collection.InsertOne(ctx, user)
+	if err != nil {
+		fmt.Println(err)
+	}
 
-	result, _ := collection.InsertOne(ctx, user)
-	// if err != nil {
-	// 	println(err)
-	// 	panic(err)
-	// }
+	resId := result.InsertedID.(primitive.ObjectID)
 
-	resId := result.InsertedID.(primitive.ObjectID).String()
-	println("생성된 데이터 : ", resId)
+	fmt.Println("생성된 데이터 id : ", resId.Hex())
+}
 
+func readCollection() {
+	cursor, err := collection.Find(ctx, bson.M{})
+	if err != nil {
+		println(err)
+	}
+
+	for cursor.Next(ctx) {
+		data := Model.User{}
+		cursor.Decode(&data)
+		println(data.Name)
+	}
 }
