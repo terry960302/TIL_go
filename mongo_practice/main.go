@@ -5,12 +5,12 @@ import (
 	"context"
 	"fmt"
 	"log"
+	. "mongo_practice/model"
 	"os"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -18,6 +18,7 @@ import (
 var (
 	mongoUrl   string
 	ctx        context.Context
+	cancel     func()
 	client     *mongo.Client
 	collection *mongo.Collection
 )
@@ -30,18 +31,19 @@ func main() {
 	initMongo()
 	insertData()
 	readCollection()
+
+	defer cancel()
 }
 
 func initMongo() {
 
+	getMongoUrl()
+
 	var err error
 
-	// var cancel func()
-
-	ctx, _ = context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel = context.WithTimeout(context.Background(), 10*time.Second)
 	// defer cancel() // defer는 함수가 종료될 때 에러가 아니라면 가장 마지막으로 실행됨.
 
-	getMongoUrl()
 	client, err = mongo.Connect(ctx, options.Client().ApplyURI(
 		mongoUrl,
 	))
@@ -50,7 +52,7 @@ func initMongo() {
 	}
 	collection = client.Database(dbName).Collection("User")
 
-	println("몽고디비에 연결되었습니다.")
+	fmt.Println("몽고디비에 연결되었습니다.")
 }
 
 func getMongoUrl() {
@@ -67,7 +69,7 @@ func getMongoUrl() {
 
 func insertData() {
 
-	user := Model.User{
+	user := User{
 		Id:    primitive.NewObjectID(),
 		Name:  "asdasd",
 		Email: "asdas@asdas",
@@ -89,7 +91,7 @@ func readCollection() {
 	}
 
 	for cursor.Next(ctx) {
-		data := Model.User{}
+		data := User{}
 		cursor.Decode(&data)
 		println(data.Name)
 	}
