@@ -8,11 +8,10 @@ import (
 	"os"
 	"time"
 
+	Model "mongo_practice/model"
+
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-
-	Model "Projects/first_golang/mongo_practice/model"
-
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
