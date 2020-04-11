@@ -21,6 +21,7 @@ var mysqlUrl string
 
 func main() {
 	//<내 계정이름>:<비번>@<프로토콜 방식>(<주소>)/<데이터베이스 이름>
+	getMySqlUrl()
 	db, err := sql.Open("mysql", mysqlUrl)
 	manageErr(err)
 	defer db.Close()
@@ -37,7 +38,7 @@ func getMySqlUrl() {
 
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
-		fmt.Println(scanner.Text())
+		// fmt.Println(scanner.Text())
 		mysqlUrl = scanner.Text()
 	}
 
