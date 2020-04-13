@@ -1,52 +1,37 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
-	"os"
-	"time"
+	"net/http"
 
-	MQTT "github.com/eclipse/paho.mqtt.golang"
+	"github.com/labstack/echo"
 )
 
-// 디폴트 메세지 핸들러(메시지가 어떤 방식으로 오고 가는지)
-var f MQTT.MessageHandler = func(client MQTT.Client, msg MQTT.Message) {
-	fmt.Printf("Topic : %s\n", msg.Topic())
-	fmt.Printf("Message : %s\n", msg.Payload())
+type TestModel struct {
+	Lat   float64 `json:"lat"`
+	Lng   float64 `json:"lng"`
+	Range int64   `json:"range"`
 }
 
 func main() {
-	// 브로커 설정
-	opts := MQTT.NewClientOptions().AddBroker("tcp://mqtt.eclipse.org:1883")
-	opts.SetClientID("go-simple")
-	opts.SetDefaultPublishHandler(f)
+	e := echo.New()
+	e.POST("/", getModel)
 
-	// 클라이언트
-	c := MQTT.NewClient(opts)
-	if token := c.Connect(); token.Wait() && token.Error() != nil {
-		panic(token.Error())
+	go e.Logger.Fatal(e.Start(":3000"))
+}
+
+func getModel(c echo.Context) error {
+	req := c.Request()
+
+	decoder := json.NewDecoder(req.Body)
+
+	var testModel TestModel = TestModel{}
+	err := decoder.Decode(&testModel)
+	if err != nil {
+		fmt.Println(err)
 	}
 
-	// go-mqtt/sample 이라는 Topic을 구독
-	if token := c.Subscribe("go-mqtt/sample", 0, nil); token.Wait() && token.Error() != nil {
-		fmt.Println(token.Error())
-		os.Exit(1)
-	}
+	return c.JSON(http.StatusOK, testModel)
 
-	// go-mqtt/sample라는 Topic으로 5개의 메세지를 발행
-	for i := 0; i < 5; i++ {
-		text := fmt.Sprintf("this is msg #%d!", i)
-		token := c.Publish("go-mqtt/sample", 0, false, text)
-		token.Wait()
-	}
-
-	// 3초 후에 발행을 멈춤.
-	time.Sleep(3 * time.Second)
-
-	// go-mqtt/sample의  발행 멈춤
-	if token := c.Unsubscribe("go-mqtt/sample"); token.Wait() && token.Error() != nil {
-		fmt.Println(token.Error())
-		os.Exit(1)
-	}
-
-	c.Disconnect(250)
 }
