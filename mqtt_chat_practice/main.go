@@ -30,6 +30,7 @@ func getModel(c echo.Context) error {
 	err := decoder.Decode(&testModel)
 	if err != nil {
 		fmt.Println(err)
+		panic(err)
 	}
 
 	return c.JSON(http.StatusOK, testModel)
